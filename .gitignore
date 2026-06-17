@@ -1,2 +1,4 @@
 data/
 *.swp
+gui/*/node_modules
+gui/frontend/dist
