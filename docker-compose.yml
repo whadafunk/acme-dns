@@ -7,9 +7,11 @@ services:
     image: acme-dns:v2.0.2
     restart: unless-stopped
     networks:
-      internal: {}
+      internal:
+        priority: 10
       macnet-40:
         ipv4_address: 192.168.40.64
+        priority: 100
     volumes:
       - ./config.cfg:/etc/acme-dns/config.cfg:ro
       - ./data:/var/lib/acme-dns
@@ -38,9 +40,11 @@ services:
     build: ./gui/frontend
     restart: unless-stopped
     networks:
-      internal: {}
+      internal:
+        priority: 10
       macnet-40:
         ipv4_address: 192.168.40.65
+        priority: 100
     environment:
       BACKEND_URL: http://gui-api:3001
     depends_on:
