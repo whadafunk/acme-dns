@@ -3,6 +3,7 @@ name: acme-dns
 services:
   acme-dns:
     container_name: acme-dns
+    build: .
     image: acme-dns:v2.0.2
     restart: unless-stopped
     networks:
