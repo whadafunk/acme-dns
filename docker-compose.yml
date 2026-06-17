@@ -7,7 +7,8 @@ services:
     restart: unless-stopped
     networks:
       - internal
-      - macnet-40
+      - macnet-40:
+          ipv4_address: 192.168.40.64
     volumes:
       - ./config.cfg:/etc/acme-dns/config.cfg:ro
       - ./data:/var/lib/acme-dns
@@ -37,7 +38,8 @@ services:
     restart: unless-stopped
     networks:
       - internal
-      - macnet-40
+      - macnet-40:
+          ipv4_address: 192.168.40.65
     environment:
       BACKEND_URL: http://gui-api:3001
     depends_on:
