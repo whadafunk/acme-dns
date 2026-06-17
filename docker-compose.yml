@@ -1,11 +1,49 @@
+name: acme-dns
+
 services:
   acme-dns:
+    container_name: acme-dns
     image: acme-dns:v2.0.2
     restart: unless-stopped
-    ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "8053:80/tcp"
+    networks:
+      - internal
+      - macnet-40
     volumes:
       - ./config.cfg:/etc/acme-dns/config.cfg:ro
       - ./data:/var/lib/acme-dns
+
+  gui-api:
+    container_name: acme-dns-gui-api
+    build: ./gui/backend
+    restart: unless-stopped
+    networks:
+      - internal
+    volumes:
+      - ./data:/data
+      - ./config.cfg:/config.cfg
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      ACME_DNS_URL: http://acme-dns:80
+      ACME_DNS_DB: /data/acme-dns.db
+      LABELS_FILE: /data/labels.json
+      ACME_DNS_CONFIG: /config.cfg
+      ACME_DNS_CONTAINER: acme-dns
+    depends_on:
+      - acme-dns
+
+  gui-web:
+    container_name: acme-dns-gui-web
+    build: ./gui/frontend
+    restart: unless-stopped
+    networks:
+      - internal
+      - macnet-40
+    environment:
+      BACKEND_URL: http://gui-api:3001
+    depends_on:
+      - gui-api
+
+networks:
+  internal:
+  macnet-40:
+    external: true
