@@ -39,7 +39,7 @@ export default function CertbotModal({ registration, onClose }) {
   const { username, password, fulldomain, subdomain, domain, allowfrom } = registration
 
   const credentialsJson = JSON.stringify({
-    [domain]: { username, password: password || '<password>', fulldomain, subdomain, allowfrom: allowfrom || [] }
+    [domain]: { username, password: password || '<password>', fulldomain, subdomain }
   }, null, 2)
 
   const credentialsFile = `acmedns-${domain}.json`
