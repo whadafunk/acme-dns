@@ -235,96 +235,106 @@ if __name__ == "__main__":
           ))}
         </div>
 
-        <div className="px-6 py-5 overflow-y-auto space-y-5">
+        <div className="px-6 py-5 overflow-y-auto">
           {noPassword && (
-            <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+            <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2 mb-5">
               Password not saved — download credentials from the registration details to get the correct files.
             </p>
           )}
 
-          {tab === 'certbot' && <>
-            <Step number="1" title="Install the acme-dns plugin">
-              <div className="pl-7">
-                <CodeBlock code="pip install certbot-dns-acmedns" />
-              </div>
-            </Step>
+          <div style={{ display: 'grid' }}>
+            {[
+              { key: 'certbot', content: <>
+                <Step number="1" title="Install the acme-dns plugin">
+                  <div className="pl-7">
+                    <CodeBlock code="pip install certbot-dns-acmedns" />
+                  </div>
+                </Step>
 
-            <Step number="2" title="Download credentials files">
-              <p className="text-xs text-gray-500 pl-7">Save both files in the same directory, then run the command below from that directory.</p>
-              <div className="pl-7 flex gap-2">
-                <DownloadButton label={`↓ ${jsonFile}`} onClick={() => download(jsonContent, jsonFile, 'application/json')} />
-                <DownloadButton label={`↓ ${iniFile}`} onClick={() => download(iniContent, iniFile)} />
-              </div>
-            </Step>
+                <Step number="2" title="Download credentials files">
+                  <p className="text-xs text-gray-500 pl-7">Save both files in the same directory, then run the command below from that directory.</p>
+                  <div className="pl-7 flex gap-2">
+                    <DownloadButton label={`↓ ${jsonFile}`} onClick={() => download(jsonContent, jsonFile, 'application/json')} />
+                    <DownloadButton label={`↓ ${iniFile}`} onClick={() => download(iniContent, iniFile)} />
+                  </div>
+                </Step>
 
-            <Step number="3" title="Run certbot">
-              <div className="pl-7">
-                <CodeBlock code={certbotCmd} />
-              </div>
-              <p className="text-xs text-gray-400 pl-7">
-                Requests a cert for <span className="font-mono">{domain}</span> and <span className="font-mono">*.{domain}</span>. Remove the wildcard if you don't need it.
-              </p>
-            </Step>
-          </>}
+                <Step number="3" title="Run certbot">
+                  <div className="pl-7">
+                    <CodeBlock code={certbotCmd} />
+                  </div>
+                  <p className="text-xs text-gray-400 pl-7">
+                    Requests a cert for <span className="font-mono">{domain}</span> and <span className="font-mono">*.{domain}</span>. Remove the wildcard if you don't need it.
+                  </p>
+                </Step>
+              </> },
+              { key: 'acme.sh', content: <>
+                <Step number="1" title="Install acme.sh">
+                  <div className="pl-7">
+                    <CodeBlock code="curl https://get.acme.sh | sh" />
+                  </div>
+                </Step>
 
-          {tab === 'acme.sh' && <>
-            <Step number="1" title="Install acme.sh">
-              <div className="pl-7">
-                <CodeBlock code="curl https://get.acme.sh | sh" />
-              </div>
-            </Step>
+                <Step number="2" title="Issue the certificate">
+                  <div className="pl-7">
+                    <CodeBlock code={acmeshCmd} />
+                  </div>
+                  <p className="text-xs text-gray-400 pl-7">
+                    All credentials are inlined. Cert is saved to <span className="font-mono">~/.acme.sh/{domain}/</span>. Renewal is set up automatically via cron.
+                  </p>
+                </Step>
+              </> },
+              { key: 'lego', content: <>
+                <Step number="1" title="Install lego">
+                  <div className="pl-7">
+                    <CodeBlock code="brew install lego" />
+                  </div>
+                </Step>
 
-            <Step number="2" title="Issue the certificate">
-              <div className="pl-7">
-                <CodeBlock code={acmeshCmd} />
-              </div>
-              <p className="text-xs text-gray-400 pl-7">
-                All credentials are inlined. Cert is saved to <span className="font-mono">~/.acme.sh/{domain}/</span>. Renewal is set up automatically via cron.
-              </p>
-            </Step>
-          </>}
+                <Step number="2" title="Download credentials file">
+                  <div className="pl-7 flex gap-2">
+                    <DownloadButton label={`↓ ${jsonFile}`} onClick={() => download(jsonContent, jsonFile, 'application/json')} />
+                  </div>
+                </Step>
 
-          {tab === 'lego' && <>
-            <Step number="1" title="Install lego">
-              <div className="pl-7">
-                <CodeBlock code="brew install lego" />
-              </div>
-            </Step>
+                <Step number="3" title="Issue the certificate">
+                  <div className="pl-7">
+                    <CodeBlock code={legoCmd} />
+                  </div>
+                  <p className="text-xs text-gray-400 pl-7">
+                    Replace <span className="font-mono">&lt;your-email&gt;</span> with your email. Cert is saved to <span className="font-mono">./.lego/certificates/</span>.
+                  </p>
+                </Step>
+              </> },
+              { key: 'hook', content: <>
+                <Step number="1" title="Download the auth hook script">
+                  <p className="text-xs text-gray-500 pl-7">Pre-filled with your registration credentials and acme-dns URL.</p>
+                  <div className="pl-7 flex gap-2">
+                    <DownloadButton label="↓ acme-dns-auth.py" onClick={() => download(hookScript, 'acme-dns-auth.py')} />
+                    <DownloadButton label={`↓ ${jsonFile}`} onClick={() => download(jsonContent, jsonFile, 'application/json')} />
+                  </div>
+                </Step>
 
-            <Step number="2" title="Download credentials file">
-              <div className="pl-7 flex gap-2">
-                <DownloadButton label={`↓ ${jsonFile}`} onClick={() => download(jsonContent, jsonFile, 'application/json')} />
+                <Step number="2" title="Run certbot">
+                  <p className="text-xs text-gray-500 pl-7">Keep both files in the same directory and run from there.</p>
+                  <div className="pl-7">
+                    <CodeBlock code={hookCmd} />
+                  </div>
+                  <p className="text-xs text-gray-400 pl-7">
+                    No plugin needed — certbot calls the script directly to fulfill the DNS challenge.
+                  </p>
+                </Step>
+              </> },
+            ].map(({ key, content }) => (
+              <div
+                key={key}
+                className="space-y-5"
+                style={{ gridRow: 1, gridColumn: 1, visibility: tab === key ? 'visible' : 'hidden', pointerEvents: tab === key ? 'auto' : 'none' }}
+              >
+                {content}
               </div>
-            </Step>
-
-            <Step number="3" title="Issue the certificate">
-              <div className="pl-7">
-                <CodeBlock code={legoCmd} />
-              </div>
-              <p className="text-xs text-gray-400 pl-7">
-                Replace <span className="font-mono">&lt;your-email&gt;</span> with your email. Cert is saved to <span className="font-mono">./.lego/certificates/</span>.
-              </p>
-            </Step>
-          </>}
-          {tab === 'hook' && <>
-            <Step number="1" title="Download the auth hook script">
-              <p className="text-xs text-gray-500 pl-7">Pre-filled with your registration credentials and acme-dns URL.</p>
-              <div className="pl-7 flex gap-2">
-                <DownloadButton label="↓ acme-dns-auth.py" onClick={() => download(hookScript, 'acme-dns-auth.py')} />
-                <DownloadButton label={`↓ ${jsonFile}`} onClick={() => download(jsonContent, jsonFile, 'application/json')} />
-              </div>
-            </Step>
-
-            <Step number="2" title="Run certbot">
-              <p className="text-xs text-gray-500 pl-7">Keep both files in the same directory and run from there.</p>
-              <div className="pl-7">
-                <CodeBlock code={hookCmd} />
-              </div>
-              <p className="text-xs text-gray-400 pl-7">
-                No plugin needed — certbot calls the script directly to fulfill the DNS challenge.
-              </p>
-            </Step>
-          </>}
+            ))}
+          </div>
         </div>
       </div>
     </div>

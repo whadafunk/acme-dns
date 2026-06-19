@@ -61,6 +61,28 @@ export async function restartServer() {
   }
 }
 
+export async function issueCertificate(username, { staging }) {
+  const r = await fetch(`${BASE}/registrations/${username}/certificate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ staging }),
+  })
+  const data = await r.json()
+  if (!r.ok) throw new Error(data.error || 'Certificate issuance failed')
+  return data
+}
+
+export async function fetchCertInfo(username) {
+  const r = await fetch(`${BASE}/registrations/${username}/certificate`)
+  if (r.status === 404) return {}
+  if (!r.ok) throw new Error('Failed to fetch certificate info')
+  return r.json()
+}
+
+export function certDownloadUrl(username, env, filename) {
+  return `${BASE}/registrations/${username}/certificate/${env}/${filename}`
+}
+
 export async function fetchHealth() {
   try {
     const r = await fetch(`${BASE}/health`)

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { verifyRegistration, fetchConfig } from '../api.js'
 import CertbotModal from './CertbotModal.jsx'
+import IssueCertModal from './IssueCertModal.jsx'
 
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false)
@@ -36,6 +37,7 @@ export default function RegistrationDetails({ registration, onClose }) {
   const [verifyState, setVerifyState] = useState('idle')
   const [verifyResult, setVerifyResult] = useState(null)
   const [showCertbot, setShowCertbot] = useState(false)
+  const [showIssueCert, setShowIssueCert] = useState(false)
   const [acmednsUrl, setAcmednsUrl] = useState(`http://${fulldomain.split('.').slice(1).join('.')}`)
 
   useEffect(() => {
@@ -152,12 +154,20 @@ export default function RegistrationDetails({ registration, onClose }) {
 
           {domain && (
             <div className="pt-1 border-t border-gray-100 flex items-center justify-between">
-              <button
-                onClick={() => setShowCertbot(true)}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-              >
-                Certbot guide
-              </button>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowCertbot(true)}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Certbot guide
+                </button>
+                <button
+                  onClick={() => setShowIssueCert(true)}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Issue certificate
+                </button>
+              </div>
               {password && (
                 <div className="flex gap-3">
                   <button onClick={exportJson} className="text-sm text-gray-500 hover:text-gray-700 font-medium">
@@ -173,6 +183,9 @@ export default function RegistrationDetails({ registration, onClose }) {
 
           {showCertbot && (
             <CertbotModal registration={registration} onClose={() => setShowCertbot(false)} />
+          )}
+          {showIssueCert && (
+            <IssueCertModal registration={registration} onClose={() => setShowIssueCert(false)} />
           )}
         </div>
       </div>

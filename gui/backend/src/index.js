@@ -3,6 +3,7 @@ import cors from 'cors'
 import { getRegistrations, saveLabel, getLabelMeta, deleteRegistrations } from './db.js'
 import { verifyCname } from './dns.js'
 import { readConfig, writeConfig, restartContainer } from './config.js'
+import { issueCertificate, getCertInfo, getCertFile } from './cert.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -63,6 +64,47 @@ app.delete('/api/registrations', (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
+})
+
+app.post('/api/registrations/:username/certificate', async (req, res) => {
+  const meta = getLabelMeta(req.params.username)
+  if (!meta?.domain || !meta?.password) {
+    return res.status(400).json({ error: 'Registration missing domain or password' })
+  }
+  const { staging = false } = req.body
+  try {
+    const result = await issueCertificate({
+      domain: meta.domain,
+      username: req.params.username,
+      password: meta.password,
+      subdomain: meta.subdomain,
+      staging,
+      acmeDnsUrl: ACME_DNS_URL,
+    })
+    res.json(result)
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+app.get('/api/registrations/:username/certificate', (req, res) => {
+  const meta = getLabelMeta(req.params.username)
+  if (!meta?.domain) return res.status(404).json({ error: 'Registration not found' })
+  const info = getCertInfo(meta.domain)
+  if (!info.prod && !info.staging) return res.status(404).json({ error: 'No certificate issued yet' })
+  res.json(info)
+})
+
+app.get('/api/registrations/:username/certificate/:env/:file', (req, res) => {
+  const { env, file } = req.params
+  if (env !== 'prod' && env !== 'staging') return res.status(400).end()
+  const meta = getLabelMeta(req.params.username)
+  if (!meta?.domain) return res.status(404).end()
+  const content = getCertFile(meta.domain, env === 'staging', file)
+  if (!content) return res.status(404).end()
+  res.setHeader('Content-Type', 'application/x-pem-file')
+  res.setHeader('Content-Disposition', `attachment; filename="${file}"`)
+  res.send(content)
 })
 
 app.get('/api/registrations/:username/verify', async (req, res) => {
