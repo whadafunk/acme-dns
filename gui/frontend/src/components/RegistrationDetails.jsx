@@ -49,7 +49,7 @@ export default function RegistrationDetails({ registration, onClose }) {
   }
 
   function exportJson() {
-    const data = { [domain]: { username, password, fulldomain, subdomain, allowfrom: allowfrom || [] } }
+    const data = { [domain]: { username, password, fulldomain, subdomain } }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
