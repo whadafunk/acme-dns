@@ -18,7 +18,8 @@ services:
     build: ./gui/backend
     restart: unless-stopped
     networks:
-      - macnet-40
+      macnet-40:
+        ipv4_address: 192.168.40.66
     volumes:
       - ./data:/data
       - ./config.cfg:/config.cfg
