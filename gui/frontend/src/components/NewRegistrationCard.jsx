@@ -46,13 +46,26 @@ export default function NewRegistrationCard({ registration, onDismiss }) {
     }
   }
 
-  function exportJson() {
-    const data = { [domain]: { username, password, fulldomain, subdomain } }
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+  function download(content, filename, type = 'text/plain') {
+    const blob = new Blob([content], { type })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = `acmedns-${domain}.json`
+    a.download = filename
     a.click()
+  }
+
+  function exportJson() {
+    const data = { [domain]: { username, password, fulldomain, subdomain, allowfrom: [] } }
+    download(JSON.stringify(data, null, 2), `acmedns-${domain}.json`, 'application/json')
+  }
+
+  function exportIni() {
+    const acmednsBase = `http://${fulldomain.split('.').slice(1).join('.')}`
+    const content = [
+      `dns_acmedns_api_url = ${acmednsBase}`,
+      `dns_acmedns_registration_file = ./acmedns-${domain}.json`,
+    ].join('\n')
+    download(content, `acmedns-${domain}.ini`)
   }
 
   return (
@@ -106,12 +119,14 @@ export default function NewRegistrationCard({ registration, onDismiss }) {
 
         <div className="pt-1 border-t border-gray-100 flex items-center justify-between">
           <p className="text-xs text-gray-500">Export credentials for your ACME client</p>
-          <button
-            onClick={exportJson}
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-          >
-            Download acmedns.json
-          </button>
+          <div className="flex gap-3">
+            <button onClick={exportJson} className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+              Download JSON
+            </button>
+            <button onClick={exportIni} className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+              Download INI
+            </button>
+          </div>
         </div>
       </div>
     </div>
