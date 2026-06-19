@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { execFile } from 'child_process'
+import http from 'http'
 
 const CONFIG_PATH = process.env.ACME_DNS_CONFIG || '../../config.cfg'
 const CONTAINER_NAME = process.env.ACME_DNS_CONTAINER || 'acme-dns'
@@ -63,9 +63,15 @@ export function writeConfig(updates) {
 
 export function restartContainer() {
   return new Promise((resolve, reject) => {
-    execFile('docker', ['restart', CONTAINER_NAME], (err, _stdout, stderr) => {
-      if (err) reject(new Error(stderr || err.message))
-      else resolve()
+    const req = http.request({
+      socketPath: '/var/run/docker.sock',
+      path: `/containers/${CONTAINER_NAME}/restart`,
+      method: 'POST',
+    }, (res) => {
+      if (res.statusCode === 204) resolve()
+      else reject(new Error(`Docker API returned ${res.statusCode}`))
     })
+    req.on('error', reject)
+    req.end()
   })
 }
