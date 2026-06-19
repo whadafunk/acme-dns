@@ -26,6 +26,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       ACME_DNS_URL: http://acme-dns:80
+      ACME_DNS_PUBLIC_URL: http://192.168.40.64
       ACME_DNS_DB: /data/acme-dns.db
       LABELS_FILE: /data/labels.json
       ACME_DNS_CONFIG: /config.cfg

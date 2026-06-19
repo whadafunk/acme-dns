@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { fetchConfig } from '../api.js'
 
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false)
@@ -49,8 +50,13 @@ function DownloadButton({ label, onClick }) {
 export default function CertbotModal({ registration, onClose }) {
   const { username, password, fulldomain, subdomain, domain, allowfrom } = registration
   const [tab, setTab] = useState('certbot')
+  const [acmednsBase, setAcmednsBase] = useState(`http://${fulldomain.split('.').slice(1).join('.')}`)
 
-  const acmednsBase = `http://${fulldomain.split('.').slice(1).join('.')}`
+  useEffect(() => {
+    fetchConfig().then(cfg => {
+      if (cfg.acmedns_url) setAcmednsBase(cfg.acmedns_url)
+    }).catch(() => {})
+  }, [])
   const jsonFile = `acmedns-${domain}.json`
   const iniFile = `acmedns-${domain}.ini`
 

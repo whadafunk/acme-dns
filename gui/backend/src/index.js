@@ -7,6 +7,7 @@ import { readConfig, writeConfig, restartContainer } from './config.js'
 const app = express()
 const PORT = process.env.PORT || 3001
 const ACME_DNS_URL = process.env.ACME_DNS_URL || 'http://localhost:8053'
+const ACME_DNS_PUBLIC_URL = process.env.ACME_DNS_PUBLIC_URL || null
 
 app.use(cors())
 app.use(express.json())
@@ -76,7 +77,9 @@ app.get('/api/registrations/:username/verify', async (req, res) => {
 
 app.get('/api/config', (req, res) => {
   try {
-    res.json(readConfig())
+    const config = readConfig()
+    if (ACME_DNS_PUBLIC_URL) config.acmedns_url = ACME_DNS_PUBLIC_URL
+    res.json(config)
   } catch (err) {
     res.status(500).json({ error: err.message })
   }
