@@ -2,8 +2,8 @@ import Database from 'better-sqlite3'
 import fs from 'fs'
 import path from 'path'
 
-const DB_PATH = process.env.ACME_DNS_DB || '../../data/acme-dns.db'
-const LABELS_PATH = process.env.LABELS_FILE || '../../data/labels.json'
+const DB_PATH = '/data/acme-dns.db'
+const LABELS_PATH = '/data/labels.json'
 
 function getDb() {
   return new Database(path.resolve(DB_PATH), { readonly: true })
