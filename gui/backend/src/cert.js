@@ -30,7 +30,7 @@ export async function issueCertificate({ domain, username, password, subdomain, 
   const client = new acme.Client({
     directoryUrl: staging
       ? acme.directory.letsencrypt.staging
-      : acme.directory.letsencrypt.v02,
+      : acme.directory.letsencrypt.production,
     accountKey,
   })
 

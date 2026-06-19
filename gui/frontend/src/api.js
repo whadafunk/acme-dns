@@ -67,8 +67,9 @@ export async function issueCertificate(username, { staging }) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ staging }),
   })
-  const data = await r.json()
-  if (!r.ok) throw new Error(data.error || 'Certificate issuance failed')
+  let data = {}
+  try { data = await r.json() } catch {}
+  if (!r.ok) throw new Error(data.error || `Request failed: ${r.status}`)
   return data
 }
 
