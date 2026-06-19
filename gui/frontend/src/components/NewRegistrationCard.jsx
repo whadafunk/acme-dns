@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { verifyRegistration } from '../api.js'
+import React, { useState, useEffect } from 'react'
+import { verifyRegistration, fetchConfig } from '../api.js'
 
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false)
@@ -34,6 +34,13 @@ export default function NewRegistrationCard({ registration, onDismiss }) {
 
   const [verifyState, setVerifyState] = useState('idle')
   const [verifyResult, setVerifyResult] = useState(null)
+  const [acmednsUrl, setAcmednsUrl] = useState(`http://${fulldomain.split('.').slice(1).join('.')}`)
+
+  useEffect(() => {
+    fetchConfig().then(cfg => {
+      if (cfg.acmedns_url) setAcmednsUrl(cfg.acmedns_url)
+    }).catch(() => {})
+  }, [])
 
   async function handleVerify() {
     setVerifyState('loading')
@@ -60,9 +67,8 @@ export default function NewRegistrationCard({ registration, onDismiss }) {
   }
 
   function exportIni() {
-    const acmednsBase = `http://${fulldomain.split('.').slice(1).join('.')}`
     const content = [
-      `dns_acmedns_api_url = ${acmednsBase}`,
+      `dns_acmedns_api_url = ${acmednsUrl}`,
       `dns_acmedns_registration_file = ./acmedns-${domain}.json`,
     ].join('\n')
     download(content, `acmedns-${domain}.ini`)
