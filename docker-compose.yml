@@ -9,9 +9,6 @@ services:
     networks:
       macnet-40:
         ipv4_address: 192.168.40.64
-        priority: 1000
-      default:
-        priority: 100
     volumes:
       - ./config.cfg:/etc/acme-dns/config.cfg:ro
       - ./data:/var/lib/acme-dns
@@ -21,7 +18,7 @@ services:
     build: ./gui/backend
     restart: unless-stopped
     networks:
-      - default
+      - macnet-40
     volumes:
       - ./data:/data
       - ./config.cfg:/config.cfg
@@ -42,15 +39,11 @@ services:
     networks:
       macnet-40:
         ipv4_address: 192.168.40.65
-        priority: 1000
-      default:
-        priority: 100
     environment:
       BACKEND_URL: http://gui-api:3001
     depends_on:
       - gui-api
 
 networks:
-  default:
   macnet-40:
     external: true
