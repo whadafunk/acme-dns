@@ -86,6 +86,113 @@ export default function CertbotModal({ registration, onClose }) {
     `  --domains ${domain} --domains '*.${domain}' run`,
   ].join('\n')
 
+  const hookScript = `#!/usr/bin/env python
+import json
+import os
+import requests
+import sys
+
+ACMEDNS_URL = "${acmednsBase}"
+STORAGE_PATH = "./${jsonFile}"
+ALLOW_FROM = ${JSON.stringify(allowfrom || [])}
+FORCE_REGISTER = False
+
+DOMAIN = os.environ["CERTBOT_DOMAIN"]
+if DOMAIN.startswith("*."):
+    DOMAIN = DOMAIN[2:]
+VALIDATION_DOMAIN = "_acme-challenge." + DOMAIN
+VALIDATION_TOKEN = os.environ["CERTBOT_VALIDATION"]
+
+
+class AcmeDnsClient(object):
+    def __init__(self, acmedns_url):
+        self.acmedns_url = acmedns_url
+
+    def register_account(self, allowfrom):
+        if allowfrom:
+            res = requests.post(self.acmedns_url + "/register",
+                                data=json.dumps({"allowfrom": allowfrom}))
+        else:
+            res = requests.post(self.acmedns_url + "/register")
+        if res.status_code == 201:
+            return res.json()
+        print("Registration failed: HTTP {} {}".format(res.status_code, res.text))
+        sys.exit(1)
+
+    def update_txt_record(self, account, txt):
+        update = {"subdomain": account["subdomain"], "txt": txt}
+        headers = {"X-Api-User": account["username"],
+                   "X-Api-Key": account["password"],
+                   "Content-Type": "application/json"}
+        res = requests.post(self.acmedns_url + "/update",
+                            headers=headers, data=json.dumps(update))
+        if res.status_code != 200:
+            print("Update failed: HTTP {} {}".format(res.status_code, res.text))
+            sys.exit(1)
+
+
+class Storage(object):
+    def __init__(self, storagepath):
+        self.storagepath = storagepath
+        self._data = self.load()
+
+    def load(self):
+        try:
+            with open(self.storagepath, "r") as fh:
+                return json.loads(fh.read())
+        except IOError:
+            if os.path.isfile(self.storagepath):
+                print("ERROR: Storage file exists but cannot be read")
+                sys.exit(1)
+        except ValueError:
+            print("ERROR: Storage JSON is corrupted")
+            sys.exit(1)
+        return {}
+
+    def save(self):
+        try:
+            with os.fdopen(os.open(self.storagepath,
+                                   os.O_WRONLY | os.O_CREAT, 0o600), "w") as fh:
+                fh.truncate()
+                fh.write(json.dumps(self._data))
+        except IOError:
+            print("ERROR: Could not write storage file.")
+            sys.exit(1)
+
+    def put(self, key, value):
+        if key.startswith("*."):
+            key = key[2:]
+        self._data[key] = value
+
+    def fetch(self, key):
+        return self._data.get(key)
+
+
+if __name__ == "__main__":
+    client = AcmeDnsClient(ACMEDNS_URL)
+    storage = Storage(STORAGE_PATH)
+
+    account = storage.fetch(DOMAIN)
+    if FORCE_REGISTER or not account:
+        account = client.register_account(ALLOW_FROM)
+        storage.put(DOMAIN, account)
+        storage.save()
+        cname = "{} CNAME {}.".format(VALIDATION_DOMAIN, account["fulldomain"])
+        print("Add this CNAME record:\\n{}".format(cname))
+
+    client.update_txt_record(account, VALIDATION_TOKEN)
+`
+
+  const hookCmd = [
+    'chmod +x acme-dns-auth.py',
+    'certbot certonly \\',
+    '  --manual \\',
+    '  --manual-auth-hook ./acme-dns-auth.py \\',
+    '  --preferred-challenges dns \\',
+    '  --config-dir . --work-dir . --logs-dir . \\',
+    `  -d ${domain} -d '*.${domain}'`,
+  ].join('\n')
+
   function download(content, filename, type = 'text/plain') {
     const blob = new Blob([content], { type })
     const a = document.createElement('a')
@@ -111,7 +218,7 @@ export default function CertbotModal({ registration, onClose }) {
         </div>
 
         <div className="px-6 flex gap-4 border-b border-gray-100 shrink-0">
-          {['certbot', 'acme.sh', 'lego'].map(t => (
+          {['certbot', 'acme.sh', 'lego', 'hook'].map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -190,6 +297,25 @@ export default function CertbotModal({ registration, onClose }) {
               </div>
               <p className="text-xs text-gray-400 pl-7">
                 Replace <span className="font-mono">&lt;your-email&gt;</span> with your email. Cert is saved to <span className="font-mono">./.lego/certificates/</span>.
+              </p>
+            </Step>
+          </>}
+          {tab === 'hook' && <>
+            <Step number="1" title="Download the auth hook script">
+              <p className="text-xs text-gray-500 pl-7">Pre-filled with your registration credentials and acme-dns URL.</p>
+              <div className="pl-7 flex gap-2">
+                <DownloadButton label="↓ acme-dns-auth.py" onClick={() => download(hookScript, 'acme-dns-auth.py')} />
+                <DownloadButton label={`↓ ${jsonFile}`} onClick={() => download(jsonContent, jsonFile, 'application/json')} />
+              </div>
+            </Step>
+
+            <Step number="2" title="Run certbot">
+              <p className="text-xs text-gray-500 pl-7">Keep both files in the same directory and run from there.</p>
+              <div className="pl-7">
+                <CodeBlock code={hookCmd} />
+              </div>
+              <p className="text-xs text-gray-400 pl-7">
+                No plugin needed — certbot calls the script directly to fulfill the DNS challenge.
               </p>
             </Step>
           </>}
