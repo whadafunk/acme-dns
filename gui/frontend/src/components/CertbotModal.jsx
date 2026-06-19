@@ -42,10 +42,13 @@ export default function CertbotModal({ registration, onClose }) {
     [domain]: { username, password: password || '<password>', fulldomain, subdomain, allowfrom: allowfrom || [] }
   }, null, 2)
 
+  const credentialsFile = `acmedns-${domain}.json`
+
   const certbotCmd = [
     'certbot certonly \\',
-    '  --authenticator dns-acme-dns \\',
-    '  --dns-acme-dns-credentials /etc/letsencrypt/acmedns.json \\',
+    '  --authenticator dns-acmedns \\',
+    `  --dns-acmedns-credentials ./${credentialsFile} \\`,
+    '  --config-dir . --work-dir . --logs-dir . \\',
     `  -d ${domain} -d '*.${domain}'`,
   ].join('\n')
 
@@ -65,11 +68,11 @@ export default function CertbotModal({ registration, onClose }) {
 
         <div className="px-6 py-5 overflow-y-auto space-y-5">
           <Step number="1" title="Install the acme-dns plugin">
-            <CodeBlock code="pip install certbot-dns-acme-dns" />
+            <CodeBlock code="pip install certbot-dns-acmedns" />
           </Step>
 
           <Step number="2" title="Save your credentials file">
-            <p className="text-xs text-gray-500 pl-7">Write this to <span className="font-mono">/etc/letsencrypt/acmedns.json</span></p>
+            <p className="text-xs text-gray-500 pl-7">Save this as <span className="font-mono">{credentialsFile}</span> in your working directory</p>
             {!password && (
               <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2 ml-7">
                 Password not saved — re-open this registration's details and use "Download acmedns.json" to get the correct credentials.
